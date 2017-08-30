@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block nav_filt_devices_active %}active{% endblock nav_filt_devices_active %}
+{% block content %}
+  <form role="form" class="pure-form" method="POST" action="">
+    {% csrf_token %}
+    <fieldset>
+    <legend>Please provide the desired device type, status and date for filtering</legend>
+      <select name="device_type">
+        {% for choice in form.device_type %}
+          {{ choice }}
+        {% endfor %}
+      </select>
+      <select name="status">
+        {% for choice in form.status %}
+          {{ choice }}
+        {% endfor %}
+      </select>
+      <br><br>
+      {{ form.device_date }}
+      <button type="submit" class="pure-button pure-button-primary">Submit</button>
+    </fieldset>
+  </form>
+
+  <table class="pure-table pure-table-bordered table">
+    <tr>
+      <th>Day</th>
+      <th>Total number of devices</th>
+    </tr>
+    {% for d in devices_filtered_list %}
+      <tr>
+        <th> {{ d.date }}</th>
+        <th> {{ d.count }}</th>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock content %}

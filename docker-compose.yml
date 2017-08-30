@@ -1,0 +1,76 @@
+version: '3'
+
+volumes:
+  postgres_status_volume:
+services:
+  # Postgres database
+  postgres:
+    image: mdillon/postgis:9.6-alpine
+    container_name: db
+    restart: always
+    volumes:
+      # /var/lib/postgresql/data is the default data-directory
+      # location in the official postgres-images, one of which
+      # is the base image for this one
+      - ./postgres/pgdata_volume:/var/lib/postgresql/data
+  postgres-monitor:
+    build:
+      context: docker/docker-postgres-monitor
+      args:
+        STATUS_VOLUME_PATH:     /postgres_status
+        POSTGRES_VERSION: 9.6
+    image: kitenow/postgres-monitor:0.5.0
+    container_name: postgres-monitor
+    depends_on:
+      - postgres
+    links:
+      - postgres:pg
+    volumes:
+      - postgres_status_volume:/postgres_status
+    environment:
+      STATUS_VOLUME_PATH: /postgres_status
+      POSTGRES_CONTAINER_ALIAS: pg
+      POSTGRES_USER: &pg_user postgres
+      POSTGRES_DB: &pg_db postgres
+      POSTGRES_TCP_PORT: &pg_port 5432
+      POSTGRES_UP_POLL_INTERVAL: 60
+      POSTGRES_DOWN_POLL_INTERVAL: 1
+
+  # Web app container
+  web:
+    build:
+      context: docker/python
+    container_name: web
+    depends_on:
+      - postgres
+      - postgres-monitor
+#      - rabbit
+    links:
+      - postgres:pg
+      - redis
+    volumes:
+      - postgres_status_volume:/postgres_status
+      - .:/code
+    ports:
+      - "8000:8000"
+    entrypoint: /postgres_status/wait_for_postgres
+    command: python3 manage.py runserver 0.0.0.0:8000
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+     - '6379:6379'
+
+  # Celery worker
+  celery:
+    build:
+      context: docker/python
+    command: celery -A reports worker
+    container_name: celery
+    volumes:
+      - .:/code
+    depends_on:
+      - postgres
+      - redis
+    restart: "on-failure"

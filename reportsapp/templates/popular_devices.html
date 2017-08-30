@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block nav_pop_devices_active %}active{% endblock nav_pop_devices_active %}
+{% block content %}
+  <form role="form" class="pure-form" method="POST" action="">
+    {% csrf_token %}
+    <fieldset>
+      <legend>Please provide the desired date for filtering the popular devices</legend>
+      {{ form.device_date }}
+      <button type="submit" class="pure-button pure-button-primary">Submit</button>
+    </fieldset>
+  </form>
+
+  <table class="pure-table pure-table-bordered table">
+    <tr>
+      <th>Device reference</th>
+      <th>Device type</th>
+      <th>Popularity</th>
+      <th>Percentage change of occurrences compared to last week</th>
+    </tr>
+    {% if form.errors %}
+      {% for field in form %}
+          {% for error in field.errors %}
+              <div class="alert alert-danger">
+                  <strong>{{ error|escape }}</strong>
+              </div>
+          {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+          <div class="alert alert-danger">
+              <strong>{{ error|escape }}</strong>
+          </div>
+      {% endfor %}
+    {% endif %}
+    {% for d in popular_devices %}
+      <tr>
+        <th> {{ d.device_ref }}</th>
+        <th> {{ d.device_type }}</th>
+        <th> {{ d.popularity }}</th>
+        <th> {{ d.occurrences_weekly_changed }}%</th>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock content %}
