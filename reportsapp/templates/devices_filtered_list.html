@@ -4,7 +4,7 @@
   <form role="form" class="pure-form" method="POST" action="">
     {% csrf_token %}
     <fieldset>
-    <legend>Please provide the desired device type, status and date for filtering</legend>
+      <legend>Please provide the desired device type, status and date for filtering</legend>
       <select name="device_type">
         {% for choice in form.device_type %}
           {{ choice }}
